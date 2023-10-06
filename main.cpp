@@ -28,6 +28,13 @@ int main() {
 			}
 		}
 
+		MyAny a;
+		a = 5;
+		std::cout << a.cast<int>() << "\n";
+		a = 3.5;
+		std::cout << a.cast<double>() << "\n";
+		a = 'a';
+		std::cout << a.cast<char>() << "\n";
 	}
 	catch (const std::bad_cast&)
 	{

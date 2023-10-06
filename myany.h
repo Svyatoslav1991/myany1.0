@@ -6,11 +6,17 @@
 class MyAny
 {
 public:
-	MyAny();
+	MyAny() noexcept;
 	~MyAny() = default;
 
+	MyAny(const MyAny& other) noexcept;
+	MyAny(MyAny&& other) noexcept;
+
+	MyAny& operator=(const MyAny& other) noexcept;
+	MyAny& operator=(MyAny&& other) noexcept;
+
 	template <typename T>
-	MyAny(const T& value);
+	MyAny(const T& value) noexcept;
 
 	//retrieving data with type checking
 	template<typename T>
@@ -18,7 +24,7 @@ public:
 
 
 	template <typename T>
-	bool isType() const;
+	bool isType() const noexcept;
 
 private:
 	//class for storing data of various types
@@ -32,10 +38,10 @@ private:
 	template <typename T>
 	struct Holder : public BaseHolder
 	{
-		Holder(const T& value);
+		Holder(const T& value) noexcept;
 
 		//overridden method that returns data type information
-		virtual const type_info& type() const override;
+		virtual const type_info& type() const noexcept override;
 
 		T m_value;
 	};
@@ -48,14 +54,70 @@ private:
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-MyAny::MyAny() : m_pData(nullptr)
+MyAny::MyAny() noexcept : m_pData(nullptr)
 {
 }
 
 //-----------------------------------------------------------------------
 
+inline MyAny::MyAny(const MyAny& other) noexcept
+{
+	if (other.m_pData)
+	{
+		m_pData = other.m_pData;
+	}
+	else
+	{
+		m_pData = nullptr;
+	}
+}
+
+//-----------------------------------------------------------------------
+
+inline MyAny& MyAny::operator=(const MyAny& other) noexcept
+{
+	if (this != &other)
+	{
+		if (other.m_pData)
+		{
+			m_pData = other.m_pData;
+		}
+		else
+		{
+			m_pData = nullptr;
+		}
+	}
+
+	return *this;
+}
+
+//-----------------------------------------------------------------------
+
+inline MyAny& MyAny::operator=(MyAny&& other) noexcept
+{
+	if (this != &other)
+	{
+		m_pData = nullptr;
+
+		m_pData = other.m_pData;
+
+		other.m_pData = nullptr;
+	}
+
+	return *this;
+}
+
+//-----------------------------------------------------------------------
+
+inline MyAny::MyAny(MyAny&& other) noexcept : m_pData(std::move(other.m_pData))
+{
+	other.m_pData = nullptr;
+}
+
+//-----------------------------------------------------------------------
+
 template<typename T>
-inline MyAny::MyAny(const T& value) : m_pData(std::make_shared<Holder<T>>(value))
+inline MyAny::MyAny(const T& value) noexcept : m_pData(std::make_shared<Holder<T>>(value))
 {
 }
 
@@ -79,7 +141,7 @@ inline T MyAny::cast() const
 //-----------------------------------------------------------------------
 
 template<typename T>
-inline bool MyAny::isType() const
+inline bool MyAny::isType() const noexcept
 {
 	if (!m_pData)
 	{
@@ -92,7 +154,7 @@ inline bool MyAny::isType() const
 //-----------------------------------------------------------------------
 
 template<typename T>
-inline MyAny::Holder<T>::Holder(const T& value) : m_value (value)
+inline MyAny::Holder<T>::Holder(const T& value) noexcept : m_value (value)
 {
 
 }
@@ -100,7 +162,7 @@ inline MyAny::Holder<T>::Holder(const T& value) : m_value (value)
 //-----------------------------------------------------------------------
 
 template<typename T>
-inline const type_info& MyAny::Holder<T>::type() const
+inline const type_info& MyAny::Holder<T>::type() const noexcept
 {
 	return typeid(T);
 }
